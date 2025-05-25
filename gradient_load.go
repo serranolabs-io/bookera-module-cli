@@ -12,22 +12,39 @@ import (
 
 // A message used to indicate that activity has occurred. In the real world (for
 // example, chat) this would contain actual data.
-type responseMsg struct {
-	message string
-}
 
 const CREATE_MODULE = "Cloning repo"
 const CREATE_TEMPLATE = "Creating template"
+const IS_DONE_MESSAGE = "Enjoy "
+
+type step int
+
+const (
+	IS_CLONING step = iota
+	IS_TEMPLATING
+	IS_DONE
+)
+
+type responseMsg struct {
+	message string
+	step    step
+}
 
 // Simulate a process that sends events at an irregular interval in real time.
 // In this case, we'll send events on the channel at a random interval between
 // 100 to 1000 milliseconds. As a command, Bubble Tea will run this
 // asynchronously.
-func (m *Model) listenForActivity() {
-	fmt.Println("CALLED")
+func (m *Model) cloneRepo() {
 	cloneRepo(m.moduleMetadata)
 
-	m.sub <- responseMsg{message: CREATE_TEMPLATE}
+	m.sub <- responseMsg{message: CREATE_TEMPLATE, step: IS_TEMPLATING}
+}
+
+func (m *Model) templateRepo() {
+	m.moduleMetadata.templateRepo()
+
+	m.sub <- responseMsg{message: IS_DONE_MESSAGE, step: IS_DONE}
+	close(m.sub)
 }
 
 // A command that waits for the activity on a channel.
@@ -61,13 +78,6 @@ func NewMessageGradient(message string) *MessageGradient {
 
 }
 
-type step int
-
-const (
-	IS_CLONING step = iota
-	IS_TEMPLATING
-)
-
 type Model struct {
 	sub             chan responseMsg
 	tick            int
@@ -82,7 +92,7 @@ func (m *Model) Init() tea.Cmd {
 	m.messageGradient = NewMessageGradient(CREATE_MODULE + ".")
 
 	m.sub = make(chan responseMsg)
-	go m.listenForActivity()
+	go m.cloneRepo()
 
 	return tea.Batch(tick, waitForActivity(m.sub))
 }
@@ -121,6 +131,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case responseMsg:
 		m.messageGradient = NewMessageGradient(msg.message)
+		m.step = msg.step
+
+		debugPrint(fmt.Sprintf("received message: %d", m.step))
+
+		if m.step == IS_TEMPLATING {
+			go m.templateRepo()
+			return m, tea.Batch(tick, waitForActivity(m.sub))
+		} else if m.step == IS_DONE {
+			return m, tea.Quit
+		}
+
 		return m, tick
 
 	case tickMsg:

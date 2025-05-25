@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 
 	"golang.org/x/text/cases"
@@ -49,7 +50,7 @@ func (mm *ModuleMetadata) getModuleNameClassName() string {
 
 // turn Module Title -> moduleTitle
 func (mm *ModuleMetadata) getModuleNameVariable() string {
-	return strings.ReplaceAll(cases.Lower(language.English).String(mm.moduleTitle[:1])+mm.moduleTitle[1:], " ", "") + "Element"
+	return strings.ReplaceAll(cases.Lower(language.English).String(mm.moduleTitle[:1])+mm.moduleTitle[1:], " ", "")
 }
 
 // turn package_name
@@ -62,6 +63,7 @@ func NewModuleMetadata() *ModuleMetadata {
 		renderModes:       []string{},
 		moduleTitle:       "",
 		moduleDescription: "",
+		tab:               NewTab(),
 	}
 }
 
@@ -78,8 +80,12 @@ func (mm *ModuleMetadata) hasSidePanel() bool {
 	return hasSidePanel
 }
 
+var useDebugMode bool
+
 func main() {
+	if len(os.Args) > 1 {
+		useDebugMode = true
+	}
 
 	runForm()
-
 }

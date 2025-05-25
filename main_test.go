@@ -22,6 +22,11 @@ func setupModuleMetadata() *ModuleMetadata {
 func TestMakeModuleTitleHumanReadable(t *testing.T) {
 	mm := setupModuleMetadata()
 	assert.Equal(t, "Module Title", mm.moduleTitle, "Module title should be human-readable")
+
+	mm = &ModuleMetadata{moduleTitle: "module"}
+	mm.makeModuleTitleHumanReadable()
+
+	assert.Equal(t, "Module", mm.moduleTitle, "Module title should be human-readable")
 }
 
 func TestGetModuleNameKebabCase(t *testing.T) {
@@ -45,7 +50,7 @@ func TestGetModuleNameClassName(t *testing.T) {
 func TestGetModuleNameVariable(t *testing.T) {
 	mm := setupModuleMetadata()
 	result := mm.getModuleNameVariable()
-	assert.Equal(t, "moduleTitleElement", result, "Module name should be in variable format with 'Element' suffix")
+	assert.Equal(t, "moduleTitle", result, "Module name should be in variable format without 'Element' suffix")
 }
 
 func TestGetModulePackageName(t *testing.T) {
