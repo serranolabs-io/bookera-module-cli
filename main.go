@@ -53,6 +53,21 @@ func (mm *ModuleMetadata) getModuleNameVariable() string {
 	return strings.ReplaceAll(cases.Lower(language.English).String(mm.moduleTitle[:1])+mm.moduleTitle[1:], " ", "")
 }
 
+// {}string["renderInSidePanel", "renderInPanel"] => "renderInSidePanel", "renderInPanel"
+func (mm *ModuleMetadata) renderRenderModes() string {
+	strs := ``
+	for i, str := range mm.renderModes {
+		strs += `"` + str + `"`
+
+		if i != len(mm.renderModes)-1 {
+			strs += ", "
+
+		}
+	}
+
+	return strs
+}
+
 // turn package_name
 func (mm *ModuleMetadata) getModulePackageName() string {
 	return "bookera-" + mm.getModuleNameKebabCase()
@@ -83,7 +98,7 @@ func (mm *ModuleMetadata) hasSidePanel() bool {
 var useDebugMode bool
 
 func main() {
-	if len(os.Args) > 1 {
+	if len(os.Args) > 2 {
 		useDebugMode = true
 	}
 

@@ -15,7 +15,7 @@ import (
 
 const CREATE_MODULE = "Cloning repo"
 const CREATE_TEMPLATE = "Creating template"
-const IS_DONE_MESSAGE = "Enjoy "
+const IS_DONE_MESSAGE = "Enjoy 🎉\nRun:\n\nbun i\nbun run dev"
 
 type step int
 

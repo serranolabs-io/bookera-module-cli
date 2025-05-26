@@ -17,16 +17,16 @@ var primaryColor = lipgloss.Color("#ffb87e")
 var textColor = lipgloss.NewStyle().Foreground(primaryColor)
 var backgroundColor = lipgloss.NewStyle().Background(primaryColor)
 
-const MAX_TITLE_LENGTH = 20
+const MAX_TITLE_LENGTH = 25
 const MAX_DESCRIPTION_LENGTH = 400
 
 type RenderMode string
 
 const (
-	SIDE_PANEL    RenderMode = "side-panel"
-	MODULE_DAEMON RenderMode = "module-daemon"
-	PANEL         RenderMode = "panel"
-	SETTINGS      RenderMode = "settings"
+	SIDE_PANEL    RenderMode = "renderInSidePanel"
+	MODULE_DAEMON RenderMode = "renderInDaemon"
+	PANEL         RenderMode = "renderInPanel"
+	SETTINGS      RenderMode = "renderInSettings"
 )
 
 func createBlend(str string) []color.Color {
@@ -65,7 +65,6 @@ func runFirstStep() *ModuleMetadata {
 			huh.NewInput().
 				Title(textColor.Render("What’s the title of your module?")).
 				Value(&mm.moduleTitle).
-				CharLimit(MAX_TITLE_LENGTH).
 
 				// Validating fields is easy. The form will mark erroneous fields
 				// and display error messages accordingly.
@@ -82,8 +81,8 @@ func runFirstStep() *ModuleMetadata {
 				}),
 			huh.NewText().
 				Title(textColor.Render("Please provide a description for your module!")).
-				CharLimit(MAX_DESCRIPTION_LENGTH).
 				Value(&mm.moduleDescription),
+
 			huh.NewMultiSelect[string]().
 				Title(textColor.Render("Render Modes (Where would you like your module rendered?)")).
 				Options(
@@ -92,7 +91,13 @@ func runFirstStep() *ModuleMetadata {
 					huh.NewOption("Panel - classic", string(PANEL)),
 					huh.NewOption("Settings - Put the settings in your module here", string(SETTINGS)),
 				).
-				Value(&mm.renderModes),
+				Value(&mm.renderModes).Validate(func(s []string) error {
+				if len(s) == 0 {
+					return errors.New("you must select one, lol")
+				}
+
+				return nil
+			}),
 		),
 	)
 

@@ -30,12 +30,22 @@ func cloneRepo(mm *ModuleMetadata) bool {
 	dirName = createDirName(dirName)
 
 	cmd := exec.Command("git", "clone", repoURL, dirName)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 
 	err := cmd.Run()
 	if err != nil {
 		log.Fatalf("Failed to clone repository: %v, please retry again", err)
+	}
+
+	// Remove .git directory
+	err = os.RemoveAll(path.Join(dirName, ".git"))
+	if err != nil {
+		log.Fatalf("Failed to remove .git directory: %v", err)
+	}
+
+	// Remove .gitignore file
+	err = os.Remove(path.Join(dirName, ".gitignore"))
+	if err != nil && !os.IsNotExist(err) {
+		log.Fatalf("Failed to remove .gitignore file: %v", err)
 	}
 
 	return true
@@ -65,16 +75,27 @@ func (mm *ModuleMetadata) applyTemplateToFile(filePath string) {
 	filePath = renameFile(filePath, "{module_name_kc}", mm.getModuleElementNameKebabCase())
 	filePath = renameFile(filePath, "{module_element_kc}", mm.getModuleElementNameKebabCase())
 
-	strContents = strings.ReplaceAll(strContents, "{packge_name}", mm.getModulePackageName())
+	strContents = strings.ReplaceAll(strContents, "{package_name}", mm.getModulePackageName())
 	strContents = strings.ReplaceAll(strContents, "{module_name_kc}", mm.getModuleNameKebabCase())
 	strContents = strings.ReplaceAll(strContents, "{module_element_kc}", mm.getModuleElementNameKebabCase())
 	strContents = strings.ReplaceAll(strContents, "$ModuleElementName", mm.getModuleNameClassName())
 	strContents = strings.ReplaceAll(strContents, "$moduleElementName", mm.getModuleNameVariable())
 	strContents = strings.ReplaceAll(strContents, "{module_name_hr}", mm.moduleTitle)
 	strContents = strings.ReplaceAll(strContents, "{description}", mm.moduleDescription)
+	strContents = strings.ReplaceAll(strContents, "`{renderModes}`", mm.renderRenderModes())
 
-	if len(mm.tab.icon) > 0 {
+	if mm.tab != nil {
 		strContents = strings.ReplaceAll(strContents, "{tab.icon}", mm.tab.icon)
+		if mm.tab.shouldShowDefault {
+			strContents = strings.ReplaceAll(strContents, ".removeTab()", "")
+		}
+
+		showOnLeftSide := "left"
+		if !mm.tab.shouldShowOnLeftSide {
+			showOnLeftSide = "right"
+		}
+
+		strContents = strings.ReplaceAll(strContents, "{shouldShowLeftSide}", showOnLeftSide)
 	}
 
 	debugPrint("file: " + filePath + "\n" + strContents)
